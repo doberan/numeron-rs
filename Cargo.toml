@@ -10,3 +10,4 @@ edition = "2018"
 crossterm = "0.17.5"
 tui = { version = "0.9.5", default-features = false, features = ['crossterm'] }
 termion = "1.5.5"
+rand = "0.7.3"

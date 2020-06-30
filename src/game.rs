@@ -1,6 +1,7 @@
 //! ゲーム管理
 use termion::*;
 use std::io::{Write, Stdout};
+use rand::prelude::*;
 use termion::{
   raw::RawTerminal
 };
@@ -60,10 +61,32 @@ impl ViewManager {
     Self {
       view,
       anser,
-      enemy_anser: vec![vec![0,0,0,0]],
-      my_anser: vec![vec![0,0,0,0]],
+      enemy_anser: vec![],
+      my_anser: vec![],
       tern,
     }
+  }
+
+  pub fn generate_anser(&mut self) {
+    let mut rng = rand::thread_rng();
+    let rand_vec: Vec<i32> = (0..4).map(|_| rng.gen_range(0, 9)).collect();
+    self.anser = rand_vec;
+  }
+
+  pub fn show_anser(&mut self, stdout: &mut RawTerminal<Stdout>) {
+    let result_y = 2_u16;
+    let mut result_x = 48_u16;
+    self.view(stdout, result_x,  result_y,  "", WriteFormat::TitleStart);
+    result_x += 1;
+    self.view(stdout, result_x,  result_y, " ", WriteFormat::Text);
+    result_x += 1;
+    for result in self.anser.clone().iter_mut() {
+      self.view(stdout, result_x,  result_y, &result.to_string(), WriteFormat::Text);
+      result_x += 1;
+      self.view(stdout, result_x,  result_y, " ", WriteFormat::Text);
+      result_x += 1;
+    }
+    self.view(stdout, result_x,  result_y,  "", WriteFormat::TitleEnd);
   }
 
   /// templateを描画する
@@ -81,7 +104,7 @@ impl ViewManager {
 
   /// 結果を描画する
   pub fn show_result_view(&mut self, stdout: &mut RawTerminal<Stdout>) {
-    let mut result_y: u16 = 4;
+    let mut result_y: u16 = 5;
     for result in self.my_anser.clone().iter_mut() {
       let mut result_x: u16 = 5;
       self.view(stdout, result_x,  result_y,  "", WriteFormat::RecordPipe);
@@ -131,16 +154,68 @@ impl ViewManager {
   }
 
   /// self.tern分の結果格納要素を追加する
-  pub fn add_anser_list(&mut self, tern: Tern) {
+  pub fn apply_anser(&mut self, input_view: &mut InputView, tern: Tern) {
     let _ = match tern {
       Tern::My => {
         self.my_anser.push(vec![]);
-        self.my_anser[self.tern as usize] = vec![0,0,0,0];
+        self.my_anser[self.tern as usize] = input_view.input_value.clone();
       },
       Tern::Enemy => {
         self.enemy_anser.push(vec![]);
-        self.enemy_anser[self.tern as usize] = vec![0,0,0,0];
+        self.enemy_anser[self.tern as usize] = input_view.input_value.clone();
       }
     };
+  }
+}
+
+/// 入力用
+#[derive(Clone)]
+pub struct InputView {
+  input_x: u16,
+  input_y: u16,
+  pub input_value: Vec<i32>,
+}
+
+impl InputView {
+
+  pub const INPUT_MAX: u16 = 15;
+
+  pub fn new() -> Self {
+    Self {
+      input_x: 11_u16,
+      input_y: 15_u16,
+      input_value: vec![],
+    }
+  }
+
+  /// inputのｘ軸をリセットする
+  pub fn reset_input_x(&mut self) {
+    self.input_x = 11_u16;
+    self.input_value = vec![];
+  }
+
+  /// inputのｘ軸を次にずらす
+  pub fn next_input_x(&mut self) {
+    if self.input_x < InputView::INPUT_MAX { self.input_x += 1_u16; };
+  }
+
+
+  pub fn set_input_value(&mut self, value: char) {
+    if self.input_x < InputView::INPUT_MAX {
+      self.input_value.push(value as i32 - 48);
+    }
+  }
+
+  /// inputを描画する
+  pub fn show_input_from_viewmanager(&mut self, stdout: &mut RawTerminal<Stdout>, view_manager: &mut ViewManager) {
+    if self.input_x < InputView::INPUT_MAX {
+      view_manager.view(
+        stdout,
+        self.input_x,
+        self.input_y,
+        &(self.input_value[(self.input_x - 11) as usize].to_string()),
+        WriteFormat::Text
+      );
+    }
   }
 }

@@ -6,7 +6,13 @@ use std::io::Stdin;
 use std::io::{stdout, stdin};
 use termion::{event, raw::IntoRawMode};
 
-use numeron_rs::game::{View, ViewManager, WriteFormat, Tern};
+use numeron_rs::game::{
+    View,
+    ViewManager,
+    WriteFormat,
+    Tern,
+    InputView
+};
 
 fn main() {
     let stdin = stdin();
@@ -18,25 +24,28 @@ fn main() {
         View {x: 42,    y: 1,  text: "NUMERON!!!!".to_string(),     format: WriteFormat::Text},
         View {x: 90,    y: 1,  text: "".to_string(),                format: WriteFormat::TitleEnd},
         View {x: 5,     y: 2,  text: "".to_string(),                format: WriteFormat::TitleStart},
-        View {x: 22,    y: 2,  text: "MY_ANSER".to_string(),        format: WriteFormat::Text},
-        View {x: 49,    y: 2,  text: "".to_string(),                format: WriteFormat::TitleEnd},
-        View {x: 50,    y: 2,  text: "".to_string(),                format: WriteFormat::TitleStart},
-        View {x: 65,    y: 2,  text: "ENEMY_ANSER".to_string(),     format: WriteFormat::Text},
+        View {x: 38,    y: 2,  text: "anser: ".to_string(),         format: WriteFormat::Text},
         View {x: 90,    y: 2,  text: "".to_string(),                format: WriteFormat::TitleEnd},
-        View {x: 5,     y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 6,     y: 3,  text: "答えた数".to_string(),          format: WriteFormat::Text},
-        View {x: 15,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 16,    y: 3,  text: "数字のみ一致".to_string(),       format: WriteFormat::Text},
-        View {x: 25,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 26,    y: 3,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
-        View {x: 49,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 50,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 51,    y: 3,  text: "答えた数".to_string(),         format: WriteFormat::Text},
-        View {x: 60,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 61,    y: 3,  text: "数字のみ一致".to_string(),      format: WriteFormat::Text},
-        View {x: 70,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 71,    y: 3,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
-        View {x: 90,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 5,     y: 3,  text: "".to_string(),                format: WriteFormat::TitleStart},
+        View {x: 22,    y: 3,  text: "MY_ANSER".to_string(),        format: WriteFormat::Text},
+        View {x: 49,    y: 3,  text: "".to_string(),                format: WriteFormat::TitleEnd},
+        View {x: 50,    y: 3,  text: "".to_string(),                format: WriteFormat::TitleStart},
+        View {x: 65,    y: 3,  text: "ENEMY_ANSER".to_string(),     format: WriteFormat::Text},
+        View {x: 90,    y: 3,  text: "".to_string(),                format: WriteFormat::TitleEnd},
+        View {x: 5,     y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 6,     y: 4,  text: "答えた数".to_string(),          format: WriteFormat::Text},
+        View {x: 15,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 16,    y: 4,  text: "数字のみ一致".to_string(),       format: WriteFormat::Text},
+        View {x: 25,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 26,    y: 4,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
+        View {x: 49,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 50,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 51,    y: 4,  text: "答えた数".to_string(),         format: WriteFormat::Text},
+        View {x: 60,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 61,    y: 4,  text: "数字のみ一致".to_string(),      format: WriteFormat::Text},
+        View {x: 70,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
+        View {x: 71,    y: 4,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
+        View {x: 90,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
         View {x: 5,     y: 13, text: "Input number is [0 - 9].".to_string(),          format: WriteFormat::Text},
         View {x: 5,     y: 14, text: "[Ctrl + c : exit] [r : refresh input] [k : input number]".to_string(),          format: WriteFormat::Text},
         View {x: 5,     y: 15, text: "input:".to_string(),          format: WriteFormat::Text}
@@ -44,9 +53,11 @@ fn main() {
 
     let mut view_manager = ViewManager::new(
         view,
-        vec![0,1,2,3],
+        vec![],
         0
     );
+
+    view_manager.generate_anser();
     view_manager.clear_view(&mut stdout);
     view_manager.template_view(&mut stdout);
     view_manager.show_tern(&mut stdout);
@@ -57,54 +68,50 @@ fn main() {
 
   /// メインループ
 fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTerminal<Stdout>) {
-    let mut input_x = 11_u16;
-    view_manager.view(stdout, 10, 15, "", WriteFormat::Pointer);
-    view_manager.view(stdout, 70, 15, &(format!("tern: {}", (view_manager.tern + 1).to_string())), WriteFormat::Pointer);
+    let mut input_view = InputView::new();
+
+    view_manager.show_tern(stdout);
+    view_manager.show_anser(stdout);
+    view_manager.show_input_pointer(stdout);
+
     for c in stdin.keys() {
         match c {
             Ok(event::Key::Char('k')) => {
-                input_x = 11_u16;
+                view_manager.apply_anser(&mut input_view, Tern::My);
+                input_view.reset_input_x();
                 // 結果処理
                 view_manager.clear_view(stdout);
                 view_manager.show_result_view(stdout);
                 view_manager.incliment_tern();
 
                 view_manager.template_view(stdout);
+                view_manager.show_anser(stdout);
                 view_manager.show_tern(stdout);
                 view_manager.show_input_pointer(stdout);
 
                 view_manager.apply_view(stdout);
-                view_manager.add_anser_list(Tern::My);
             },
             Ok(event::Key::Char('r')) => {
-                input_x = 11_u16;
-                view_manager.my_anser.remove(view_manager.tern as usize);
-
+                input_view.reset_input_x();
                 view_manager.clear_view(stdout);
                 view_manager.show_result_view(stdout);
 
                 view_manager.template_view(stdout);
+                view_manager.show_anser(stdout);
                 view_manager.show_tern(stdout);
                 view_manager.show_input_pointer(stdout);
 
                 view_manager.apply_view(stdout);
-                view_manager.add_anser_list(Tern::My);
             },
             Ok(event::Key::Char(a)) => {
                 if a as i32 - 48 >= 0 && a as i32 - 48 <= 9 {
-                    let index = input_x as i32 - 11;
-
-                    input_x = if input_x == 15_u16 {
-                        15_u16
-                    } else {
-                        view_manager.view(stdout, input_x, 15, &a.to_string(), WriteFormat::Text);
-                        view_manager.apply_view(stdout);
-                        view_manager.my_anser[view_manager.tern as usize][index as usize] = a as i32 - 48;
-                        input_x + 1_u16
-                    };
+                    input_view.set_input_value(a);
+                    input_view.show_input_from_viewmanager(stdout, view_manager);
+                    input_view.next_input_x();
+                    view_manager.apply_view(stdout);
                 }
            },
-            Ok(event::Key::Ctrl('c')) => break,
+            Ok(event::Key::Ctrl('c')) => return,
             _ => {},
         }
     };
