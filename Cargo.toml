@@ -1,0 +1,12 @@
+[package]
+name = "numeron-rs"
+version = "0.1.0"
+authors = ["doberan <doberankei@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+crossterm = "0.17.5"
+tui = { version = "0.9.5", default-features = false, features = ['crossterm'] }
+termion = "1.5.5"
