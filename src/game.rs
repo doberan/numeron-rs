@@ -14,6 +14,7 @@ pub enum Tern {
   /// 敵
   Enemy
 }
+
 #[derive(Clone)]
 pub enum WriteFormat {
   /// テキスト
@@ -111,12 +112,12 @@ impl ViewManager {
 
   /// ターンを表示する
   pub fn show_tern(&mut self, stdout: &mut RawTerminal<Stdout>) {
-    self.view(stdout, 70, 15, &(format!("tern: {}", (self.tern + 1).to_string())), WriteFormat::Text);
+    self.view(stdout, 75, 15, &(format!("tern: {}", (self.tern + 1).to_string())), WriteFormat::Text);
   }
 
   /// 入力待ち用のポインタ位置出力
   pub fn show_input_pointer(&mut self, stdout: &mut RawTerminal<Stdout>) {
-    self.view(stdout, 10, 15, "", WriteFormat::Pointer);
+    self.view(stdout, 11, 15, "", WriteFormat::Pointer);
   }
 
   /// viewを反映させる

@@ -37,7 +37,9 @@ fn main() {
         View {x: 70,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
         View {x: 71,    y: 3,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
         View {x: 90,    y: 3,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 3,     y: 15, text: "input:".to_string(),          format: WriteFormat::Text}
+        View {x: 5,     y: 13, text: "Input number is [0 - 9].".to_string(),          format: WriteFormat::Text},
+        View {x: 5,     y: 14, text: "[Ctrl + c : exit] [r : refresh input] [k : input number]".to_string(),          format: WriteFormat::Text},
+        View {x: 5,     y: 15, text: "input:".to_string(),          format: WriteFormat::Text}
     ];
 
     let mut view_manager = ViewManager::new(
@@ -55,13 +57,13 @@ fn main() {
 
   /// メインループ
 fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTerminal<Stdout>) {
-    let mut input_x = 10_u16;
+    let mut input_x = 11_u16;
     view_manager.view(stdout, 10, 15, "", WriteFormat::Pointer);
     view_manager.view(stdout, 70, 15, &(format!("tern: {}", (view_manager.tern + 1).to_string())), WriteFormat::Pointer);
     for c in stdin.keys() {
         match c {
             Ok(event::Key::Char('k')) => {
-                input_x = 10_u16;
+                input_x = 11_u16;
                 // 結果処理
                 view_manager.clear_view(stdout);
                 view_manager.show_result_view(stdout);
@@ -75,7 +77,7 @@ fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTermi
                 view_manager.add_anser_list(Tern::My);
             },
             Ok(event::Key::Char('r')) => {
-                input_x = 10_u16;
+                input_x = 11_u16;
                 view_manager.my_anser.remove(view_manager.tern as usize);
 
                 view_manager.clear_view(stdout);
@@ -89,17 +91,19 @@ fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTermi
                 view_manager.add_anser_list(Tern::My);
             },
             Ok(event::Key::Char(a)) => {
-                let index = input_x as i32 - 10;
+                if a as i32 - 48 >= 0 && a as i32 - 48 <= 9 {
+                    let index = input_x as i32 - 11;
 
-                input_x = if input_x == 14_u16 {
-                    14_u16
-                } else {
-                    view_manager.view(stdout, input_x, 15, &a.to_string(), WriteFormat::Text);
-                    view_manager.apply_view(stdout);
-                    view_manager.my_anser[view_manager.tern as usize][index as usize] = a as i32 - 48;
-                    input_x + 1_u16
-                };
-            },
+                    input_x = if input_x == 15_u16 {
+                        15_u16
+                    } else {
+                        view_manager.view(stdout, input_x, 15, &a.to_string(), WriteFormat::Text);
+                        view_manager.apply_view(stdout);
+                        view_manager.my_anser[view_manager.tern as usize][index as usize] = a as i32 - 48;
+                        input_x + 1_u16
+                    };
+                }
+           },
             Ok(event::Key::Ctrl('c')) => break,
             _ => {},
         }
