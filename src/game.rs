@@ -52,6 +52,10 @@ pub struct ViewManager {
   pub enemy_anser: Vec<Vec<i32>>,
   /// 自分の答え
   pub my_anser: Vec<Vec<i32>>,
+  pub match_number_only_my_anser: Vec<i32>,
+  pub match_number_and_index_my_anser: Vec<i32>,
+  /// 入力
+  pub input_view: InputView,
   /// ターン
   pub tern: i32
 }
@@ -63,14 +67,47 @@ impl ViewManager {
       anser,
       enemy_anser: vec![],
       my_anser: vec![],
+      match_number_only_my_anser: vec![],
+      match_number_and_index_my_anser: vec![],
+      input_view: InputView::new(),
       tern,
     }
   }
 
+  /// anserを生成する
   pub fn generate_anser(&mut self) {
     let mut rng = rand::thread_rng();
-    let rand_vec: Vec<i32> = (0..4).map(|_| rng.gen_range(0, 9)).collect();
-    self.anser = rand_vec;
+    let mut anser: Vec<i32> = vec![];
+    loop {
+      if &4 == &anser.len() { break };
+      let v: i32 = rng.gen_range(0, 9);
+      let ununique: Vec<i32> = anser.iter().filter(|&&a| a == v).cloned().collect();
+      if ununique.is_empty() {
+        &anser.push(v);
+      };
+    }
+
+    self.anser = anser;
+  }
+
+  /// anserと入力した値を数字のみかチェックする
+  pub fn check_match_number_only(&mut self, tern: Tern/*, stdout: &mut RawTerminal<Stdout>*/) {
+    let _ = match tern {
+      Tern::My => {
+        let mut count = 0;
+        for b in 0..self.my_anser[self.tern.clone() as usize].clone().len() {
+          for a in 0..self.anser.len() {
+            if b != a && self.anser[a] == self.my_anser[self.tern.clone() as usize][b] {
+              count += 1;
+            }
+          }
+        }
+        // debug用
+        // self.view(stdout, 100, 1, &count.to_string(), WriteFormat::Text);
+        self.match_number_only_my_anser.push(count);
+      },
+      Tern::Enemy => {  }
+    };
   }
 
   pub fn show_anser(&mut self, stdout: &mut RawTerminal<Stdout>) {
@@ -105,14 +142,17 @@ impl ViewManager {
   /// 結果を描画する
   pub fn show_result_view(&mut self, stdout: &mut RawTerminal<Stdout>) {
     let mut result_y: u16 = 5;
-    for result in self.my_anser.clone().iter_mut() {
+    for tern_index in 0..self.my_anser.clone().len() {
       let mut result_x: u16 = 5;
       self.view(stdout, result_x,  result_y,  "", WriteFormat::RecordPipe);
-      for value in result.iter_mut() {
+      for value in self.my_anser[tern_index].clone().iter() {
         result_x += 1;
         self.view(stdout, result_x,  result_y,  &value.to_string(), WriteFormat::Text);
       }
       self.view(stdout, 15, result_y,  "", WriteFormat::RecordPipe);
+      self.view(stdout, 16, result_y,  &self.match_number_only_my_anser[tern_index].to_string(), WriteFormat::Text);
+      self.view(stdout, 16, result_y,  &self.match_number_only_my_anser[tern_index].to_string(), WriteFormat::Text);
+      self.view(stdout, 25, result_y,  "", WriteFormat::RecordPipe);
       result_y += 1;
     }
   }
@@ -154,17 +194,30 @@ impl ViewManager {
   }
 
   /// self.tern分の結果格納要素を追加する
-  pub fn apply_anser(&mut self, input_view: &mut InputView, tern: Tern) {
+  pub fn apply_anser(&mut self, tern: Tern) {
     let _ = match tern {
       Tern::My => {
         self.my_anser.push(vec![]);
-        self.my_anser[self.tern as usize] = input_view.input_value.clone();
+        self.my_anser[self.tern as usize] = self.input_view.input_value.clone();
       },
       Tern::Enemy => {
         self.enemy_anser.push(vec![]);
-        self.enemy_anser[self.tern as usize] = input_view.input_value.clone();
+        self.enemy_anser[self.tern as usize] = self.input_view.input_value.clone();
       }
     };
+  }
+
+  /// inputを描画する
+  pub fn show_input(&mut self, stdout: &mut RawTerminal<Stdout>) {
+    if self.input_view.input_x < InputView::INPUT_MAX {
+      self.view(
+        stdout,
+        self.input_view.input_x,
+        self.input_view.input_y,
+        &(self.input_view.input_value[(self.input_view.input_x - 11) as usize].to_string()),
+        WriteFormat::Text
+      );
+    }
   }
 }
 
@@ -177,7 +230,6 @@ pub struct InputView {
 }
 
 impl InputView {
-
   pub const INPUT_MAX: u16 = 15;
 
   pub fn new() -> Self {
@@ -199,23 +251,10 @@ impl InputView {
     if self.input_x < InputView::INPUT_MAX { self.input_x += 1_u16; };
   }
 
-
+  /// 入力を保持する
   pub fn set_input_value(&mut self, value: char) {
     if self.input_x < InputView::INPUT_MAX {
       self.input_value.push(value as i32 - 48);
-    }
-  }
-
-  /// inputを描画する
-  pub fn show_input_from_viewmanager(&mut self, stdout: &mut RawTerminal<Stdout>, view_manager: &mut ViewManager) {
-    if self.input_x < InputView::INPUT_MAX {
-      view_manager.view(
-        stdout,
-        self.input_x,
-        self.input_y,
-        &(self.input_value[(self.input_x - 11) as usize].to_string()),
-        WriteFormat::Text
-      );
     }
   }
 }

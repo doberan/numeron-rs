@@ -10,8 +10,7 @@ use numeron_rs::game::{
     View,
     ViewManager,
     WriteFormat,
-    Tern,
-    InputView
+    Tern
 };
 
 fn main() {
@@ -46,9 +45,10 @@ fn main() {
         View {x: 70,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
         View {x: 71,    y: 4,  text: "数字も位置も一致".to_string(),    format: WriteFormat::Text},
         View {x: 90,    y: 4,  text: "".to_string(),                format: WriteFormat::RecordPipe},
-        View {x: 5,     y: 13, text: "Input number is [0 - 9].".to_string(),          format: WriteFormat::Text},
-        View {x: 5,     y: 14, text: "[Ctrl + c : exit] [r : refresh input] [k : input number]".to_string(),          format: WriteFormat::Text},
-        View {x: 5,     y: 15, text: "input:".to_string(),          format: WriteFormat::Text}
+        View {x: 5,     y: 15, text: "input:".to_string(),          format: WriteFormat::Text},
+        View {x: 5,     y: 16, text: "操作説明=================================================".to_string(),          format: WriteFormat::Text},
+        View {x: 5,     y: 17, text: "Input number is [0 - 9].".to_string(),          format: WriteFormat::Text},
+        View {x: 5,     y: 18, text: "[Ctrl + c : exit] [r : refresh input] [k : input number]".to_string(),          format: WriteFormat::Text},
     ];
 
     let mut view_manager = ViewManager::new(
@@ -61,6 +61,7 @@ fn main() {
     view_manager.clear_view(&mut stdout);
     view_manager.template_view(&mut stdout);
     view_manager.show_tern(&mut stdout);
+    view_manager.show_anser(&mut stdout);
     view_manager.show_input_pointer(&mut stdout);
     view_manager.apply_view(&mut stdout);
     main_roop(&mut view_manager, stdin, &mut stdout);
@@ -68,7 +69,6 @@ fn main() {
 
   /// メインループ
 fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTerminal<Stdout>) {
-    let mut input_view = InputView::new();
 
     view_manager.show_tern(stdout);
     view_manager.show_anser(stdout);
@@ -76,9 +76,10 @@ fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTermi
 
     for c in stdin.keys() {
         match c {
-            Ok(event::Key::Char('k')) => {
-                view_manager.apply_anser(&mut input_view, Tern::My);
-                input_view.reset_input_x();
+            Ok(event::Key::Char('k')) => { // apply
+                view_manager.apply_anser(Tern::My);
+                view_manager.check_match_number_only(Tern::My/*, stdout*/);
+                view_manager.input_view.reset_input_x();
                 // 結果処理
                 view_manager.clear_view(stdout);
                 view_manager.show_result_view(stdout);
@@ -91,8 +92,8 @@ fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTermi
 
                 view_manager.apply_view(stdout);
             },
-            Ok(event::Key::Char('r')) => {
-                input_view.reset_input_x();
+            Ok(event::Key::Char('r')) => { // refresh
+                view_manager.input_view.reset_input_x();
                 view_manager.clear_view(stdout);
                 view_manager.show_result_view(stdout);
 
@@ -103,11 +104,11 @@ fn main_roop(view_manager: &mut ViewManager, stdin: Stdin, stdout: &mut RawTermi
 
                 view_manager.apply_view(stdout);
             },
-            Ok(event::Key::Char(a)) => {
+            Ok(event::Key::Char(a)) => { // input
                 if a as i32 - 48 >= 0 && a as i32 - 48 <= 9 {
-                    input_view.set_input_value(a);
-                    input_view.show_input_from_viewmanager(stdout, view_manager);
-                    input_view.next_input_x();
+                    view_manager.input_view.set_input_value(a);
+                    view_manager.show_input(stdout);
+                    view_manager.input_view.next_input_x();
                     view_manager.apply_view(stdout);
                 }
            },
